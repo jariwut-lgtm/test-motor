@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Simple Mobile AR Lab - Motor Status</title>
+  <title>Simple Mobile AR Lab - Wind Turbine Status</title>
 
-  <!-- Open-source libraries. The versions are pinned so A-Frame and AR.js match. -->
+  <!-- Open-source libraries pinned for compatibility -->
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.7/aframe/build/aframe-ar.js"></script>
 
@@ -71,10 +71,10 @@
   </style>
 
   <script>
-    // A tiny reusable component that rotates an object without extra libraries.
+    // Component for rotating the turbine blades
     AFRAME.registerComponent('spin-control', {
       schema: {
-        axis: { type: 'string', default: 'y' },
+        axis: { type: 'string', default: 'z' },
         speed: { type: 'number', default: 180 },
         active: { type: 'boolean', default: true }
       },
@@ -93,8 +93,8 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       const marker = document.querySelector('#hiro-marker');
-      const shaft = document.querySelector('#shaft');
-      const motorBody = document.querySelector('#motor-body');
+      const rotor = document.querySelector('#rotor');
+      const turbineBody = document.querySelector('#turbine-body');
       const warningLamp = document.querySelector('#warning-lamp');
       const arLabel = document.querySelector('#ar-label');
       const topPanel = document.querySelector('#top-panel');
@@ -105,7 +105,7 @@
       let warning = false;
 
       marker.addEventListener('markerFound', () => {
-        topPanel.innerHTML = 'พบ Hiro Marker แล้ว — โมเดลมอเตอร์พร้อมใช้งาน<span class="hint">แตะปุ่มด้านล่างเพื่อทดลองควบคุม</span>';
+        topPanel.innerHTML = 'พบ Hiro Marker แล้ว — โมเดลกังหันลมพร้อมใช้งาน<span class="hint">แตะปุ่มด้านล่างเพื่อทดลองควบคุม</span>';
       });
 
       marker.addEventListener('markerLost', () => {
@@ -114,24 +114,24 @@
 
       runButton.addEventListener('click', () => {
         running = !running;
-        shaft.setAttribute('spin-control', 'active', running);
-        runButton.textContent = running ? 'หยุดมอเตอร์' : 'เริ่มมอเตอร์';
+        rotor.setAttribute('spin-control', 'active', running);
+        runButton.textContent = running ? 'หยุดกังหัน' : 'เริ่มกังหัน';
       });
 
       statusButton.addEventListener('click', () => {
         warning = !warning;
 
         if (warning) {
-          motorBody.setAttribute('color', '#ef5350');
+          turbineBody.setAttribute('color', '#ef5350');
           warningLamp.setAttribute('color', '#ff1744');
           warningLamp.setAttribute('material', 'emissive', '#ff1744');
-          arLabel.setAttribute('value', 'MOTOR M1\nSTATUS: WARNING');
+          arLabel.setAttribute('value', 'WIND TURBINE T1\nSTATUS: WARNING');
           statusButton.textContent = 'เปลี่ยนเป็นปกติ';
         } else {
-          motorBody.setAttribute('color', '#1976d2');
+          turbineBody.setAttribute('color', '#ffffff');
           warningLamp.setAttribute('color', '#00e676');
           warningLamp.setAttribute('material', 'emissive', '#00c853');
-          arLabel.setAttribute('value', 'MOTOR M1\nSTATUS: NORMAL');
+          arLabel.setAttribute('value', 'WIND TURBINE T1\nSTATUS: NORMAL');
           statusButton.textContent = 'จำลองคำเตือน';
         }
       });
@@ -146,7 +146,7 @@
   </div>
 
   <div id="controls">
-    <button id="run-button" type="button">หยุดมอเตอร์</button>
+    <button id="run-button" type="button">หยุดกังหัน</button>
     <button id="status-button" type="button">จำลองคำเตือน</button>
   </div>
 
@@ -165,74 +165,113 @@
       smooth-tolerance="0.01"
       smooth-threshold="3"
     >
-      <!-- Floor plate -->
-      <a-box
-        position="0 0.04 0"
-        width="1.35"
-        height="0.08"
-        depth="0.85"
+      <!-- Base Foundation -->
+      <a-cylinder
+        position="0 0.02 0"
+        radius="0.55"
+        height="0.04"
         color="#455a64"
         roughness="0.8"
+      ></a-cylinder>
+
+      <a-cylinder
+        position="0 0.06 0"
+        radius="0.28"
+        height="0.06"
+        color="#263238"
+      ></a-cylinder>
+
+      <!-- Wind Turbine Tower -->
+      <a-cone
+        position="0 1.0 0"
+        radius-bottom="0.18"
+        radius-top="0.1"
+        height="1.82"
+        color="#eceff1"
+        roughness="0.4"
+      ></a-cone>
+
+      <!-- Nacelle (Main Body at Top) -->
+      <a-box
+        id="turbine-body"
+        position="0 1.95 0"
+        width="0.32"
+        height="0.34"
+        depth="0.75"
+        color="#ffffff"
+        roughness="0.3"
       ></a-box>
 
-      <!-- Two mounting feet -->
-      <a-box position="-0.42 0.15 0" width="0.18" height="0.18" depth="0.55" color="#263238"></a-box>
-      <a-box position="0.42 0.15 0" width="0.18" height="0.18" depth="0.55" color="#263238"></a-box>
-
-      <!-- Motor housing: cylinder lies along X axis -->
-      <a-cylinder
-        id="motor-body"
-        position="0 0.47 0"
-        rotation="0 0 90"
-        radius="0.32"
-        height="0.72"
-        segments-radial="32"
-        color="#1976d2"
-        metalness="0.25"
-        roughness="0.55"
-      ></a-cylinder>
-
-      <!-- Rear cap -->
-      <a-cylinder
-        position="-0.40 0.47 0"
-        rotation="0 0 90"
-        radius="0.27"
-        height="0.12"
-        color="#90a4ae"
-      ></a-cylinder>
-
-      <!-- Shaft assembly: parent fixes the shaft direction; child spins locally -->
-      <a-entity position="0.52 0.47 0" rotation="0 0 90">
-        <a-cylinder
-          id="shaft"
-          radius="0.09"
-          height="0.42"
-          color="#cfd8dc"
-          metalness="0.8"
-          roughness="0.2"
-          spin-control="axis: y; speed: 220; active: true"
-        >
-          <a-box position="0 0.12 0.09" width="0.05" height="0.18" depth="0.06" color="#ffeb3b"></a-box>
-        </a-cylinder>
-      </a-entity>
-
-      <!-- Status lamp -->
+      <!-- Status Lamp on top of Nacelle -->
       <a-sphere
         id="warning-lamp"
-        position="0 0.87 0"
-        radius="0.075"
+        position="0 2.18 -0.1"
+        radius="0.06"
         color="#00e676"
         material="emissive: #00c853; emissiveIntensity: 0.8"
       ></a-sphere>
 
+      <!-- Rotor Assembly (Blades and Hub spinning on Z-axis) -->
+      <a-entity
+        id="rotor"
+        position="0 1.95 0.4"
+        spin-control="axis: z; speed: 200; active: true"
+      >
+        <!-- Rotor Nose Cone (Hub) -->
+        <a-cone
+          position="0 0 0.08"
+          rotation="90 0 0"
+          radius-bottom="0.16"
+          radius-top="0.04"
+          height="0.22"
+          color="#cfd8dc"
+        ></a-cone>
+
+        <!-- Blade 1 (0 deg) -->
+        <a-entity rotation="0 0 0">
+          <a-box
+            position="0 0.55 0"
+            width="0.07"
+            height="0.9"
+            depth="0.02"
+            color="#ffffff"
+            roughness="0.2"
+          ></a-box>
+        </a-entity>
+
+        <!-- Blade 2 (120 deg) -->
+        <a-entity rotation="0 0 120">
+          <a-box
+            position="0 0.55 0"
+            width="0.07"
+            height="0.9"
+            depth="0.02"
+            color="#ffffff"
+            roughness="0.2"
+          ></a-box>
+        </a-entity>
+
+        <!-- Blade 3 (240 deg) -->
+        <a-entity rotation="0 0 240">
+          <a-box
+            position="0 0.55 0"
+            width="0.07"
+            height="0.9"
+            depth="0.02"
+            color="#ffffff"
+            roughness="0.2"
+          ></a-box>
+        </a-entity>
+      </a-entity>
+
       <!-- AR information label -->
       <a-text
         id="ar-label"
-        value="MOTOR M1\nSTATUS: NORMAL"
-        position="0 1.12 0"
+        value="WIND TURBINE T1\nSTATUS: NORMAL"
+        position="0 2.55 0"
         rotation="-90 0 0"
         align="center"
-        width="2.4"
+        width="2.6"
         color="#ffffff"
         side="double"
       ></a-text>
