@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Mobile AR Lab - Running Rabbits</title>
+  <title>AR Rabbits Running</title>
 
   <!-- Open-source libraries -->
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
@@ -14,7 +14,7 @@
     body {
       margin: 0;
       overflow: hidden;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: system-ui, -apple-system, sans-serif;
       background: #111;
     }
 
@@ -27,11 +27,10 @@
       width: min(92vw, 520px);
       padding: 10px 14px;
       border-radius: 12px;
-      background: rgba(0, 0, 0, 0.68);
+      background: rgba(0, 0, 0, 0.7);
       color: white;
       text-align: center;
       font-size: 15px;
-      line-height: 1.4;
       backdrop-filter: blur(4px);
     }
 
@@ -48,7 +47,7 @@
     }
 
     button {
-      min-width: 132px;
+      min-width: 130px;
       min-height: 48px;
       border: 0;
       border-radius: 12px;
@@ -61,28 +60,20 @@
 
     #run-button { background: #ffffff; color: #111111; }
     #status-button { background: #ffd54f; color: #111111; }
-
-    .hint {
-      display: block;
-      margin-top: 4px;
-      font-size: 12px;
-      opacity: 0.8;
-    }
+    .hint { display: block; margin-top: 4px; font-size: 12px; opacity: 0.8; }
   </style>
 
   <script>
-    // คอมโพเนนต์หมุนกลุ่มกระต่ายเป็นวงกลมรอบแกน Y
+    // Component สั่งหมุนฝูงกระต่ายรอบแกน Y
     AFRAME.registerComponent('spin-control', {
       schema: {
-        axis: { type: 'string', default: 'y' },
         speed: { type: 'number', default: 120 },
         active: { type: 'boolean', default: true }
       },
-
       tick: function (_time, deltaMs) {
         if (!this.data.active || !deltaMs) return;
         const radians = THREE.MathUtils.degToRad(this.data.speed * deltaMs / 1000);
-        if (this.data.axis === 'y') this.el.object3D.rotation.y += radians;
+        this.el.object3D.rotation.y += radians;
       }
     });
 
@@ -97,52 +88,47 @@
       const rabbitBodies = document.querySelectorAll('.rabbit-body');
 
       let running = true;
-      let warning = false;
+      let panic = false;
 
       marker.addEventListener('markerFound', () => {
-        topPanel.innerHTML = 'พบ Hiro Marker แล้ว — ฝูงกระต่ายพร้อมวิ่ง<span class="hint">แตะปุ่มด้านล่างเพื่อสั่งการ</span>';
+        topPanel.innerHTML = 'พบ Hiro Marker แล้ว — ฝูงกระต่ายพร้อมวิ่ง!<span class="hint">แตะปุ่มด้านล่างเพื่อควบคุม</span>';
       });
 
       marker.addEventListener('markerLost', () => {
-        topPanel.innerHTML = 'เล็งกล้องไปที่ Hiro Marker<span class="hint">วาง Marker บนโต๊ะที่มีแสงเพียงพอ</span>';
+        topPanel.innerHTML = 'เล็งกล้องไปที่ Hiro Marker<span class="hint">ส่องไปที่แผ่น Marker บนโต๊ะ</span>';
       });
 
+      // ปุ่มเริ่ม / หยุด วิ่ง
       runButton.addEventListener('click', () => {
         running = !running;
         rabbitGroup.setAttribute('spin-control', 'active', running);
         
-        // สลับสถานะการกระโดดของกระต่ายทุกตัว
-        const animatedEntities = document.querySelectorAll('[animation]');
-        animatedEntities.forEach(el => {
-          if (running) {
-            el.play();
-          } else {
-            el.pause();
-          }
+        // สลับสถานะการกระโดด
+        document.querySelectorAll('[animation]').forEach(el => {
+          if (running) el.play(); else el.pause();
         });
 
         runButton.textContent = running ? 'หยุดวิ่ง' : 'เริ่มวิ่ง';
       });
 
+      // ปุ่มจำลองตกใจ
       statusButton.addEventListener('click', () => {
-        warning = !warning;
+        panic = !panic;
 
-        if (warning) {
-          // กระต่ายโหมดตื่นตระหนก (เปลี่ยนตัวเป็นสีแดง/ส้ม)
-          rabbitBodies.forEach(b => b.setAttribute('color', '#ff8a80'));
+        if (panic) {
+          rabbitBodies.forEach(b => b.setAttribute('color', '#ff8a80')); // เปลี่ยนกระต่ายเป็นสีส้ม/แดง
           warningLamp.setAttribute('color', '#ff1744');
           warningLamp.setAttribute('material', 'emissive', '#ff1744');
           arLabel.setAttribute('value', 'RABBITS: PANIC MODE!\nSPEED: FAST');
-          rabbitGroup.setAttribute('spin-control', 'speed', 240); // วิ่งเร็วขึ้น
-          statusButton.textContent = 'เปลี่ยนเป็นปกติ';
+          rabbitGroup.setAttribute('spin-control', 'speed', 240); // วิ่งเร็วขึ้น 2 เท่า
+          statusButton.textContent = 'กลับเป็นปกติ';
         } else {
-          // กลับสู่โหมดปกติ (ตัวสีขาว)
-          rabbitBodies.forEach(b => b.setAttribute('color', '#ffffff'));
+          rabbitBodies.forEach(b => b.setAttribute('color', '#ffffff')); // กลับเป็นสีขาว
           warningLamp.setAttribute('color', '#00e676');
           warningLamp.setAttribute('material', 'emissive', '#00c853');
           arLabel.setAttribute('value', 'RABBITS: HAPPY RUNNING\nSTATUS: NORMAL');
           rabbitGroup.setAttribute('spin-control', 'speed', 120);
-          statusButton.textContent = 'จำลองตื่นตระหนก';
+          statusButton.textContent = 'จำลองตื่นตกใจ';
         }
       });
     });
@@ -152,12 +138,12 @@
 <body>
   <div id="top-panel">
     เล็งกล้องไปที่ Hiro Marker
-    <span class="hint">อนุญาตให้เว็บไซต์ใช้กล้องเมื่อเบราว์เซอร์ถาม</span>
+    <span class="hint">อนุญาตให้ใช้งานกล้องบนหน้าเว็บ</span>
   </div>
 
   <div id="controls">
     <button id="run-button" type="button">หยุดวิ่ง</button>
-    <button id="status-button" type="button">จำลองตื่นตระหนก</button>
+    <button id="status-button" type="button">จำลองตื่นตกใจ</button>
   </div>
 
   <a-scene
@@ -166,106 +152,89 @@
     renderer="logarithmicDepthBuffer: true; antialias: true; colorManagement: true"
     arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false"
   >
-    <a-marker
-      id="hiro-marker"
-      preset="hiro"
-      emitevents="true"
-      smooth="true"
-      smooth-count="8"
-    >
-      <!-- 1. ฐานสนามหญ้า (Grass Meadow Platform) -->
-      <a-cylinder position="0 0.02 0" radius="0.75" height="0.04" color="#4caf50" roughness="0.9"></a-cylinder>
-      <!-- ลู่วิ่งวงกลม (Dirt Track Ring) -->
-      <a-ring position="0 0.045 0" rotation="-90 0 0" radius-inner="0.38" radius-outer="0.62" color="#8d6e63"></a-ring>
-      
-      <!-- ตกแต่งตรงกลาง: แครอทยักษ์ (Center Landmark) -->
-      <a-cone position="0 0.2 0" rotation="180 0 0" radius-bottom="0.12" radius-top="0.01" height="0.35" color="#ff9800"></a-cone>
-      <a-sphere position="0 0.38 0" radius="0.08" color="#4caf50" scale="1 0.3 1"></a-sphere>
+    <a-marker id="hiro-marker" preset="hiro" emitevents="true">
 
-      <!-- ไฟเตือนสถานะกลางสนาม -->
-      <a-sphere
-        id="warning-lamp"
-        position="0 0.5 0"
-        radius="0.05"
-        color="#00e676"
-        material="emissive: #00c853; emissiveIntensity: 0.8"
-      ></a-sphere>
+      <!-- 1. สนามหญ้าสีเขียว (Grass Field) -->
+      <a-cylinder position="0 0.02 0" radius="0.7" height="0.04" color="#4caf50"></a-cylinder>
+      <!-- ลู่วิ่งวงกลมสีน้ำตาล -->
+      <a-ring position="0 0.045 0" rotation="-90 0 0" radius-inner="0.38" radius-outer="0.58" color="#795548"></a-ring>
 
-      <!-- 2. กลุ่มกระต่ายวิ่งเป็นวงกลม (Rabbit Group) -->
-      <a-entity
-        id="rabbit-group"
-        position="0 0 0"
-        spin-control="axis: y; speed: 120; active: true"
-      >
-        <!-- กระต่ายตัวที่ 1 (ทิศ 0 องศา) -->
-        <a-entity position="0.5 0 0" rotation="0 0 0">
-          <a-entity animation="property: position; from: 0 0.08 0; to: 0 0.22 0; dir: alternate; loop: true; dur: 250; easing: easeInOutSine">
-            <!-- ลำตัว -->
-            <a-sphere class="rabbit-body" position="0 0 0" radius="0.1" scale="0.9 0.8 1.3" color="#ffffff"></a-sphere>
-            <!-- หัว -->
-            <a-sphere class="rabbit-body" position="0 0.08 0.1" radius="0.07" color="#ffffff"></a-sphere>
-            <!-- หูซ้าย-ขวา -->
-            <a-cylinder position="-0.03 0.18 0.1" radius="0.012" height="0.12" rotation="15 -10 -10" color="#ffcdd2"></a-cylinder>
-            <a-cylinder position="0.03 0.18 0.1" radius="0.012" height="0.12" rotation="15 10 10" color="#ffcdd2"></a-cylinder>
-            <!-- ตา -->
-            <a-sphere position="-0.04 0.1 0.15" radius="0.012" color="#e91e63"></a-sphere>
-            <a-sphere position="0.04 0.1 0.15" radius="0.012" color="#e91e63"></a-sphere>
-            <!-- หาง -->
-            <a-sphere position="0 0.04 -0.12" radius="0.035" color="#ffffff"></a-sphere>
+      <!-- 2. แครอทตรงกลางสนาม (Carrot Landmark) -->
+      <a-cone position="0 0.22 0" rotation="180 0 0" radius-bottom="0.1" radius-top="0.01" height="0.3" color="#ff9800"></a-cone>
+      <a-sphere position="0 0.38 0" radius="0.07" color="#2e7d32" scale="1 0.3 1"></a-sphere>
+
+      <!-- ไฟเตือนกลางสนาม -->
+      <a-sphere id="warning-lamp" position="0 0.48 0" radius="0.04" color="#00e676" material="emissive: #00c853; emissiveIntensity: 0.8"></a-sphere>
+
+      <!-- 3. กลุ่มกระต่าย 4 ตัววิ่งรอบแครอท -->
+      <a-entity id="rabbit-group" position="0 0 0" spin-control="speed: 120; active: true">
+
+        <!-- กระต่ายตัวที่ 1 -->
+        <a-entity position="0.48 0 0" rotation="0 0 0">
+          <a-entity animation="property: position; from: 0 0.08 0; to: 0 0.2 0; dir: alternate; loop: true; dur: 220; easing: easeInOutSine">
+            <a-sphere class="rabbit-body" position="0 0 0" radius="0.09" scale="0.9 0.8 1.3" color="#ffffff"></a-sphere> <!-- ตัว -->
+            <a-sphere class="rabbit-body" position="0 0.07 0.09" radius="0.065" color="#ffffff"></a-sphere> <!-- หัว -->
+            <a-cylinder position="-0.03 0.16 0.09" radius="0.01" height="0.11" rotation="15 -10 -10" color="#ffcdd2"></a-cylinder> <!-- หูซ้าย -->
+            <a-cylinder position="0.03 0.16 0.09" radius="0.01" height="0.11" rotation="15 10 10" color="#ffcdd2"></a-cylinder> <!-- หูขวา -->
+            <a-sphere position="-0.035 0.09 0.14" radius="0.01" color="#d81b60"></a-sphere> <!-- ตา -->
+            <a-sphere position="0.035 0.09 0.14" radius="0.01" color="#d81b60"></a-sphere>
+            <a-sphere position="0 0.03 -0.1" radius="0.03" color="#ffffff"></a-sphere> <!-- หาง -->
           </a-entity>
         </a-entity>
 
-        <!-- กระต่ายตัวที่ 2 (ทิศ 90 องศา) -->
-        <a-entity position="0 0 -0.5" rotation="0 270 0">
-          <a-entity animation="property: position; from: 0 0.08 0; to: 0 0.22 0; dir: alternate; loop: true; dur: 250; easing: easeInOutSine">
-            <a-sphere class="rabbit-body" position="0 0 0" radius="0.1" scale="0.9 0.8 1.3" color="#ffffff"></a-sphere>
-            <a-sphere class="rabbit-body" position="0 0.08 0.1" radius="0.07" color="#ffffff"></a-sphere>
-            <a-cylinder position="-0.03 0.18 0.1" radius="0.012" height="0.12" rotation="15 -10 -10" color="#ffcdd2"></a-cylinder>
-            <a-cylinder position="0.03 0.18 0.1" radius="0.012" height="0.12" rotation="15 10 10" color="#ffcdd2"></a-cylinder>
-            <a-sphere position="-0.04 0.1 0.15" radius="0.012" color="#e91e63"></a-sphere>
-            <a-sphere position="0.04 0.1 0.15" radius="0.012" color="#e91e63"></a-sphere>
-            <a-sphere position="0 0.04 -0.12" radius="0.035" color="#ffffff"></a-sphere>
+        <!-- กระต่ายตัวที่ 2 -->
+        <a-entity position="0 0 -0.48" rotation="0 270 0">
+          <a-entity animation="property: position; from: 0 0.08 0; to: 0 0.2 0; dir: alternate; loop: true; dur: 220; easing: easeInOutSine">
+            <a-sphere class="rabbit-body" position="0 0 0" radius="0.09" scale="0.9 0.8 1.3" color="#ffffff"></a-sphere>
+            <a-sphere class="rabbit-body" position="0 0.07 0.09" radius="0.065" color="#ffffff"></a-sphere>
+            <a-cylinder position="-0.03 0.16 0.09" radius="0.01" height="0.11" rotation="15 -10 -10" color="#ffcdd2"></a-cylinder>
+            <a-cylinder position="0.03 0.16 0.09" radius="0.01" height="0.11" rotation="15 10 10" color="#ffcdd2"></a-cylinder>
+            <a-sphere position="-0.035 0.09 0.14" radius="0.01" color="#d81b60"></a-sphere>
+            <a-sphere position="0.035 0.09 0.14" radius="0.01" color="#d81b60"></a-sphere>
+            <a-sphere position="0 0.03 -0.1" radius="0.03" color="#ffffff"></a-sphere>
           </a-entity>
         </a-entity>
 
-        <!-- กระต่ายตัวที่ 3 (ทิศ 180 องศา) -->
-        <a-entity position="-0.5 0 0" rotation="0 180 0">
-          <a-entity animation="property: position; from: 0 0.08 0; to: 0 0.22 0; dir: alternate; loop: true; dur: 250; easing: easeInOutSine">
-            <a-sphere class="rabbit-body" position="0 0 0" radius="0.1" scale="0.9 0.8 1.3" color="#ffffff"></a-sphere>
-            <a-sphere class="rabbit-body" position="0 0.08 0.1" radius="0.07" color="#ffffff"></a-sphere>
-            <a-cylinder position="-0.03 0.18 0.1" radius="0.012" height="0.12" rotation="15 -10 -10" color="#ffcdd2"></a-cylinder>
-            <a-cylinder position="0.03 0.18 0.1" radius="0.012" height="0.12" rotation="15 10 10" color="#ffcdd2"></a-cylinder>
-            <a-sphere position="-0.04 0.1 0.15" radius="0.012" color="#e91e63"></a-sphere>
-            <a-sphere position="0.04 0.1 0.15" radius="0.012" color="#e91e63"></a-sphere>
-            <a-sphere position="0 0.04 -0.12" radius="0.035" color="#ffffff"></a-sphere>
+        <!-- กระต่ายตัวที่ 3 -->
+        <a-entity position="-0.48 0 0" rotation="0 180 0">
+          <a-entity animation="property: position; from: 0 0.08 0; to: 0 0.2 0; dir: alternate; loop: true; dur: 220; easing: easeInOutSine">
+            <a-sphere class="rabbit-body" position="0 0 0" radius="0.09" scale="0.9 0.8 1.3" color="#ffffff"></a-sphere>
+            <a-sphere class="rabbit-body" position="0 0.07 0.09" radius="0.065" color="#ffffff"></a-sphere>
+            <a-cylinder position="-0.03 0.16 0.09" radius="0.01" height="0.11" rotation="15 -10 -10" color="#ffcdd2"></a-cylinder>
+            <a-cylinder position="0.03 0.16 0.09" radius="0.01" height="0.11" rotation="15 10 10" color="#ffcdd2"></a-cylinder>
+            <a-sphere position="-0.035 0.09 0.14" radius="0.01" color="#d81b60"></a-sphere>
+            <a-sphere position="0.035 0.09 0.14" radius="0.01" color="#d81b60"></a-sphere>
+            <a-sphere position="0 0.03 -0.1" radius="0.03" color="#ffffff"></a-sphere>
           </a-entity>
         </a-entity>
 
-        <!-- กระต่ายตัวที่ 4 (ทิศ 270 องศา) -->
-        <a-entity position="0 0 0.5" rotation="0 90 0">
-          <a-entity animation="property: position; from: 0 0.08 0; to: 0 0.22 0; dir: alternate; loop: true; dur: 250; easing: easeInOutSine">
-            <a-sphere class="rabbit-body" position="0 0 0" radius="0.1" scale="0.9 0.8 1.3" color="#ffffff"></a-sphere>
-            <a-sphere class="rabbit-body" position="0 0.08 0.1" radius="0.07" color="#ffffff"></a-sphere>
-            <a-cylinder position="-0.03 0.18 0.1" radius="0.012" height="0.12" rotation="15 -10 -10" color="#ffcdd2"></a-cylinder>
-            <a-cylinder position="0.03 0.18 0.1" radius="0.012" height="0.12" rotation="15 10 10" color="#ffcdd2"></a-cylinder>
-            <a-sphere position="-0.04 0.1 0.15" radius="0.012" color="#e91e63"></a-sphere>
-            <a-sphere position="0.04 0.1 0.15" radius="0.012" color="#e91e63"></a-sphere>
-            <a-sphere position="0 0.04 -0.12" radius="0.035" color="#ffffff"></a-sphere>
+        <!-- กระต่ายตัวที่ 4 -->
+        <a-entity position="0 0 0.48" rotation="0 90 0">
+          <a-entity animation="property: position; from: 0 0.08 0; to: 0 0.2 0; dir: alternate; loop: true; dur: 220; easing: easeInOutSine">
+            <a-sphere class="rabbit-body" position="0 0 0" radius="0.09" scale="0.9 0.8 1.3" color="#ffffff"></a-sphere>
+            <a-sphere class="rabbit-body" position="0 0.07 0.09" radius="0.065" color="#ffffff"></a-sphere>
+            <a-cylinder position="-0.03 0.16 0.09" radius="0.01" height="0.11" rotation="15 -10 -10" color="#ffcdd2"></a-cylinder>
+            <a-cylinder position="0.03 0.16 0.09" radius="0.01" height="0.11" rotation="15 10 10" color="#ffcdd2"></a-cylinder>
+            <a-sphere position="-0.035 0.09 0.14" radius="0.01" color="#d81b60"></a-sphere>
+            <a-sphere position="0.035 0.09 0.14" radius="0.01" color="#d81b60"></a-sphere>
+            <a-sphere position="0 0.03 -0.1" radius="0.03" color="#ffffff"></a-sphere>
           </a-entity>
         </a-entity>
+
       </a-entity>
 
       <!-- ป้ายข้อความ AR -->
       <a-text
         id="ar-label"
         value="RABBITS: HAPPY RUNNING\nSTATUS: NORMAL"
-        position="0 0.85 0"
+        position="0 0.75 0"
         rotation="-90 0 0"
         align="center"
-        width="2.6"
+        width="2.5"
         color="#ffffff"
         side="double"
       ></a-text>
+
     </a-marker>
 
     <a-entity camera></a-entity>
